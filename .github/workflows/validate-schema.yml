@@ -1,10 +1,10 @@
-name: Validacao isolada de Schema — somente manual
+name: Validacao isolada de Schema — Fase 8 BLOQUEADA
 
 on:
   workflow_dispatch:
     inputs:
-      autorizacao:
-        description: 'Somente apos autorizacao expressa da Fase 8: digite FASE8-AUTORIZADA'
+      revisao_aprovada:
+        description: 'Fase 8 suspensa. SHA exato exigido somente apos nova autorizacao independente.'
         required: true
         type: string
 
@@ -17,21 +17,19 @@ concurrency:
 
 jobs:
   validate:
-    if: github.repository == 'anselmoads83/anselmo-schema-validation' && github.ref == 'refs/heads/main' && inputs.autorizacao == 'FASE8-AUTORIZADA'
+    # Bloqueio literal deliberado. Nao remover sem nova auditoria e autorizacao expressa.
+    if: ${{ false && github.repository == 'anselmoads83/anselmo-schema-validation' && github.ref == 'refs/heads/main' && inputs.revisao_aprovada == github.sha }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    env:
+      SCHEMA_APPROVED_REVISION: ${{ inputs.revisao_aprovada }}
     steps:
       - name: Ler exclusivamente o repositorio de validacao
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
           submodules: false
-      - name: Preparar Node.js 22 sem cache
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: '22'
-          check-latest: false
-      - name: Ler copia publica da base fixa — nenhuma escrita no original
+      - name: Ler base publica fixa sem escrever no original
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: anselmoads83/mei-conecta-f-cil
@@ -39,9 +37,9 @@ jobs:
           path: comparison/base
           persist-credentials: false
           submodules: false
-      - name: Preparar comparacao e instalar somente pelo lockfile
+      - name: Conferir politica, material e lockfile sem instalar dependencias
         shell: bash
         run: bash prepare-comparison.sh
-      - name: Comprovar bloqueio e executar em namespace sem rede externa
+      - name: Supervisor restrito — sem aquisicao conectada ou fallback
         shell: bash
         run: bash isolate-runtime.sh
