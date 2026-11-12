@@ -154,6 +154,8 @@ def main():
                 need(set(host.get('CapAdd') or []) == {'SETUID', 'SETGID', 'SETPCAP', 'KILL'}, 'SUPERVISOR_CAPABILITIES')
                 need('no-new-privileges=true' in host.get('SecurityOpt', []), 'NO_NEW_PRIVILEGES')
                 result = run(['docker', 'start', '--attach', active], timeout=1050)
+                state = json.loads(run(['docker', 'inspect', active]).stdout)[0]['State']
+                need(not state['Running'] and state['ExitCode'] == 0 and not state.get('OOMKilled') and not state.get('Error'), 'CONTAINER_EXIT_NOT_SUCCESSFUL')
                 # Nunca publicar stdout/stderr arbitrarios da carga. Somente resultado estruturado permitido.
                 need((evidence / 'result.json').is_file() and not (evidence / 'result.json').is_symlink(), 'DRIVER_RESULT_MISSING')
                 need((evidence / 'result.json').stat().st_size < 1_000_000, 'DRIVER_RESULT_LIMIT')

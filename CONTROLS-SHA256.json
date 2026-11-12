@@ -11,7 +11,7 @@
     "README.md": "cfd4ca774106d43a868c7ed214a1731642f86ea7ba8cc081080ecc3ba912b02e",
     "RELATORIO-FASE-7D.md": "bf6a6bab9ef75ea45b02c2631500a03e0634d12c4f703dac7d83eaedf3cc4716",
     "runtime-supervisor.py": "d5a0db093f5738222e3c3f6b13279e8f9c3adc94d5ba6a866eeaf286d3cce8a2",
-    "supervise-validation.py": "f2d10dc7d13dc15bdba4f800547efceb15c08b2310516e4199be11a28062cde7",
+    "supervise-validation.py": "2968dcaae595ab97d108950f55692a00d201b69e9585692b499a4dd74cd18e67",
     "validate-runtime.mjs": "0a7b4f7559038c27a0b4810b2f19d849ae69be43530ed4246eeadfd0be02964d",
     ".github/workflows/validate-schema.yml": "3087f654c056e75c1cca9be858f555228e256fa5636f902e2334ef766d034b4c"
   }
