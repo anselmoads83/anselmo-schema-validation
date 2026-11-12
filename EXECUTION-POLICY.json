@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "phase8_authorized": false,
+  "requires_reviewed_revision_input": true,
+  "runtime_image": null,
+  "offline_cache_sha256": null,
+  "blocking_reasons": [
+    "Fase 8 nao autorizada",
+    "Imagem de runtime por digest ainda nao selecionada e auditada",
+    "Bundle de cache npm offline ainda nao fornecido e auditado"
+  ]
+}

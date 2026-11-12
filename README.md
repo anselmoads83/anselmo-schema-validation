@@ -1,25 +1,27 @@
-# Etapa 14 — Fase 7 — ambiente independente de validacao
+# Etapa 14 — Fase 7D — correcoes preparadas, execucao bloqueada
 
-Preparacao tecnica, sem execucao. Producao nao esta ligada a este repositorio.
+**Fase 8 NAO AUTORIZADA.** O workflow permanece somente manual e seu job esta bloqueado por `if: ${{ false }}`. `EXECUTION-POLICY.json` tambem mantem `phase8_authorized: false`. Nenhuma carga pode ser liberada simplesmente digitando uma frase no formulario.
 
-**Nao executar o workflow sem autorizacao expressa e independente da Fase 8.**
-O campo manual de confirmacao e apenas uma trava operacional: nao substitui a autorizacao do proprietario.
+Esta revisao substitui os controles operacionais da Fase 7. `AUDITORIA-FASE-7.md` e um registro historico; nao descreve o novo launcher. O plano atualizado esta em `PLANO-VALIDACAO.md`, e as limitacoes em `RELATORIO-FASE-7D.md`.
 
-## Material preservado
+## Material original inalterado
 
-`material-recuperado.zip` contem os cinco arquivos originais da proposta, duas rotas de referencia, dois JSON-LD, `HASHES-SHA256.json` e `ALTERACOES.diff`. Os bytes dos arquivos foram copiados sem reconstrucao ou normalizacao de linhas. O hash do ZIP curado esta em `MATERIAL-SHA256.txt`. Este ZIP e um novo empacotamento dos arquivos recuperados, nao substitui os dois pacotes historicos.
+`material-recuperado.zip` e `MATERIAL-SHA256.txt` nao foram modificados. Os cinco arquivos de proposta, duas rotas originais, dois JSON-LD, manifesto original e diff aprovado permanecem dentro do ZIP. SHA-256 do ZIP: `d9456a739e69e9e5559300de11a47d2eaa1ddc10c9edd35c4e125906faa9f43f`.
 
-Os pacotes historicos permanecem no ambiente de origem. Nenhum relatorio com caminhos locais, log historico ou configuracao de producao foi incluido no ZIP publico curado.
+## Nova arquitetura preparada
 
-## Fluxo preparado
+- Nenhuma instalacao npm ou execucao de aplicacao no host.
+- Imagem local previamente auditada, identificada por digest; sem pull automatico.
+- Cache npm previamente auditado; instalacao exclusivamente offline e sem lifecycle.
+- Containers separados por variante, sem rede, filesystem raiz somente leitura, IPC privado, limites de memoria/processos e nenhum socket ou porta do host.
+- Aplicacao UID 62001 e driver/Chrome UID 62002, sem grupos suplementares nem capacidades; apenas o supervisor confiavel possui capacidades limitadas dentro do container.
+- Controles e referencias em mounts somente leitura; perfis, fontes de trabalho, caches e evidencias separados.
+- CDP por pipes privados, sem porta de depuracao acessivel a aplicacao.
+- Interacoes React reais, verificacao de documento preservado na navegacao, comparacao completa de JSON-LD com a referencia e metadados SSR/DOM.
+- Remocao forcada do container/cgroup pelo supervisor do host em falha ou timeout; nenhum fallback para execucao direta.
 
-1. Acionamento exclusivamente manual, no repositorio de validacao e branch main.
-2. Checkout sem credenciais persistidas; Node.js 22; leitura da base fixa publica `97632988b7c9f1ffca113f9ddaaa1b801cc76259` em subpasta descartavel. Nenhuma escrita ou chamada de deploy no original.
-3. Conferencia do manifesto, diff e rotas originais; copia separada e aplicacao dos cinco arquivos da proposta.
-4. Validacao das origens do lockfile e instalacao `npm ci --ignore-scripts --no-audit --no-fund`, sem executar codigo da aplicacao na etapa com rede.
-5. Novo namespace Linux apenas com loopback; processos sem privilegios e sem credenciais herdadas. Fixture local e bloqueio IPv4/IPv6 comprovados antes do build; verificacao adicional no Chrome antes de iniciar a aplicacao.
-6. Build, typecheck, lint e comparacao SSR/browser somente dentro desse namespace.
+## Impedimentos mantidos de forma explicita
 
-O workflow nao foi executado, nem as dependencias instaladas. A sintaxe e a logica foram revisadas por leitura; o funcionamento no runner, Chrome com sandbox padrao, prazo e compatibilidade permanecem sem evidencia de execucao.
+A imagem por digest e o bundle offline nao existem nesta entrega. Seus campos continuam nulos; o launcher recusa iniciar. Seleciona-los exige trabalho posterior autorizado, revisao de procedencia, versoes e compatibilidade, sem ampliar permissoes de aplicativos. Nao foi improvisada uma imagem, cache, proxy ou instalacao conectada.
 
-Consulte `PLANO-VALIDACAO.md` e `AUDITORIA-FASE-7.md`. A preparacao nao e aprovacao funcional, SEO ou autorizacao de publicacao.
+Nem o launcher nem o driver foram executados. As correcoes precisam de nova auditoria independente. Compatibilidade do Chrome com sandbox, runtime e regressao funcional/visual continuam sem aprovacao. Nao usar --no-sandbox nem desabilitar seccomp/AppArmor.

@@ -1,0 +1,18 @@
+{
+  "source_revision": "6b6eb00a1a25482d51bc3fa0f8f002f1f058bd4c",
+  "material_zip_sha256": "d9456a739e69e9e5559300de11a47d2eaa1ddc10c9edd35c4e125906faa9f43f",
+  "files": {
+    "EXECUTION-POLICY.json": "27d5b60002c87f2da978e573a14b70ad0a48d6b431bf6adafb7d898d6e11517d",
+    "isolate-runtime.sh": "73559eaf4bbbc289b9120dccd41c40a44f61dc5923ab3ddbad67ddc14c508a3e",
+    "isolated-checks.sh": "6b08e09f0387aafcdfa4289d3639853651ff8519a80f3ffc36533f12d1aa87d9",
+    "PLANO-VALIDACAO.md": "023cf3269c21be76b85bb0e80a15bd4dc566b1e7def11dc16af7e545986c2c4d",
+    "prepare-comparison.sh": "24f9530f1b260b23ec5832fbdd624e9f132e56da8be85d86cab3e5f237727c5d",
+    "prepare-material.py": "cee95bcdc40031b2ce2d5f52aba3ef25a3514b98f6ace1ce53070b8a3d115b65",
+    "README.md": "cfd4ca774106d43a868c7ed214a1731642f86ea7ba8cc081080ecc3ba912b02e",
+    "RELATORIO-FASE-7D.md": "bf6a6bab9ef75ea45b02c2631500a03e0634d12c4f703dac7d83eaedf3cc4716",
+    "runtime-supervisor.py": "d5a0db093f5738222e3c3f6b13279e8f9c3adc94d5ba6a866eeaf286d3cce8a2",
+    "supervise-validation.py": "f2d10dc7d13dc15bdba4f800547efceb15c08b2310516e4199be11a28062cde7",
+    "validate-runtime.mjs": "0a7b4f7559038c27a0b4810b2f19d849ae69be43530ed4246eeadfd0be02964d",
+    ".github/workflows/validate-schema.yml": "3087f654c056e75c1cca9be858f555228e256fa5636f902e2334ef766d034b4c"
+  }
+}

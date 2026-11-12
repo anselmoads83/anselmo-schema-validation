@@ -1,61 +1,61 @@
-# Plano de isolamento e criterios — execucao futura autorizada
+# Fase 7D — criterios objetivos para futura auditoria e execucao
 
-## Isolamento obrigatorio
+## Estado atual: nenhuma execucao liberada
 
-O runner Ubuntu 24.04 e temporario. A instalacao inicial usa rede para Actions oficiais, Node e registry.npmjs.org. O lockfile deve conter somente tarballs HTTPS desse registry e integridade registrada. Nao ha lifecycle de dependencias, audit, fund, npx ou codigo da aplicacao na etapa conectada.
+O workflow tem somente workflow_dispatch, contents: read e job bloqueado incondicionalmente. A politica mantem autorizacao false, imagem null e hash de cache null. Sao bloqueios deliberados, nao parametros a preencher automaticamente. Uma futura autorizacao deve identificar o commit exato revisado. O SHA fornecido externamente deve coincidir com GITHUB_SHA e o checkout real; nao colocar no proprio commit um SHA que teria de corresponder ao hash dele mesmo.
 
-`isolate-runtime.sh` cria um namespace de rede novo, sem veth, bridge, NAT ou encaminhamento DNS. Ativa somente loopback. O host nao recebe portas nem regras de firewall novas. Build, SSR, Chrome e driver sao filhos do mesmo namespace. `setpriv` remove capacidades, impede elevacao posterior e troca para o usuario comum; `env -i` nao herda tokens, chaves ou configuracao GitHub. O navegador usa sandbox padrao: nao usar --no-sandbox nem relaxar protecoes para contornar falha.
+## Imagem e aquisicao
 
-Antes do build, `isolated-checks.sh` exige uma unica interface e nenhuma rota default IPv4/IPv6. Uma fixture sintetica em loopback deve responder; tentativas de conexao a enderecos de documentacao 192.0.2.1 e 2001:db8::1 devem falhar. Nenhum endpoint real e usado para testar o bloqueio. Antes da aplicacao, o driver repete comunicacao local e tentativa externa no navegador. Somente depois inicia a aplicacao.
+Requisito pendente: imagem Linux auditada e disponivel localmente, por digest imutavel, com Node 22, npm, Python3, setpriv e Google Chrome com sandbox funcional. Nenhum pull, build de imagem, instalacao de ferramenta ou alteracao de protecoes e feito automaticamente. A imagem nao pode exigir --privileged, sandbox desabilitado, seccomp unconfined ou AppArmor desabilitado. Sua procedencia, configuracoes e bibliotecas devem ser auditadas antes de autorizar uso.
 
-O Chrome ainda recebe interceptacao que permite somente GET/HEAD para http://127.0.0.1:3000. Chamadas externas e metodos de submissao sao bloqueados. Isso e uma camada adicional; a barreira principal e a ausencia de rede externa no namespace, incluindo chamadas do servidor. CDP e aplicacao escutam apenas em loopback. Sem tunel, porta publica, banco ou credenciais de producao.
+Requisito pendente: offline-cache.zip contendo somente _cacache, sem links e com SHA-256 aprovado. A criacao desse bundle deve ocorrer em aquisicao separada, com destinos restritos, TLS validado, redirecionamentos controlados e nenhum lifecycle ou codigo do projeto. Esse mecanismo de aquisicao conectada NAO foi implementado nesta entrega: nao ha ambiente/proxy auditado nem bundle aprovado disponivel. Por isso nao existe fallback para npm conectado. A fase de validacao faz apenas npm ci --offline --ignore-scripts --no-audit --no-fund, com configuracoes npm de usuario/global desativadas.
 
-Qualquer falha na criacao do namespace, retirada de privilegios, pre-verificacao, navegador ou dependencias encerra o job. Nao existe fallback para o host, rede aberta ou producao. O namespace e removido no encerramento. O mecanismo esta preparado, mas sua comprovacao executada depende da Fase 8. Nenhuma garantia de testes aprovados e inferida da preparacao.
+## Integridade e comparacao
 
-## Comparacao controlada
+prepare-material.py usa verificacoes explicitas, nao assert. Exige ZIP original e diff por hashes fixos, nove entradas do manifesto exatamente iguais as referencias documentadas, ausencia de duplicatas e limites de tamanho. Confere a base fixa 97632988b7c9f1ffca113f9ddaaa1b801cc76259 e worktree limpa antes de gerar copias. Nao reconstroi ou altera o material recuperado.
 
-Base fixa: 97632988b7c9f1ffca113f9ddaaa1b801cc76259. O workflow le essa revisao exata; nao acompanha main/deploy/guara do original nem escreve nele. As duas rotas devem corresponder byte a byte aos originais documentados. A proposta recebe somente os cinco arquivos preservados. package.json e package-lock.json permanecem da base, sem nova dependencia de teste: Chrome do runner e CDP/WebSocket do Node sao utilizados. Se o Chrome esperado nao estiver disponivel, parar.
+Lockfile v3 obrigatorio; entradas locais/bundled/workspaces e fontes fora de tarballs HTTPS de registry.npmjs.org sao recusadas. Integridade sha512 obrigatoria e coerencia de dependencias entre package.json/lockfile. Qualquer incompatibilidade com o lockfile recuperado e pendencia para revisao, nunca relaxamento automatico. Arquivos operacionais .env*, .npmrc, shrinkwrap ou credenciais sao recusados. .env.example nao e disponibilizado as cargas. Os snapshots e hashes de controle ficam protegidos; package/lock e fontes sao reconferidos apos instalacao, tipo, lint, build e runtime.
 
-As duas variantes usam o mesmo lockfile, ambiente e comandos. Build: npm run build com NITRO_PRESET=node-server. Typecheck: compilador local tsc --noEmit. Lint: npm run lint. Falhas de qualquer variante encerram a aprovacao; comparar logs por variante para distinguir preexistencia de regressao. Nao suprimir regra, modificar lockfile ou habilitar scripts de instalacao automaticamente.
+## Isolamento e supervisao
 
-## Criterios de aprovacao
+O supervisor do host e o unico usuario do Docker; o socket nunca entra no container. Ele usa imagem ja local, sem pull, network none, IPC privado, rootfs read-only e mounts enumerados. Nao ha rede host, publish de portas, dispositivos extras, volumes de outros containers ou modos privilegiados. /app, /tmp, /run e shm sao privados; limites de RAM, CPU e PIDs sao definidos.
 
-| Item | Evidencia exigida |
+O supervisor interno e root apenas dentro do container, com SETUID, SETGID, SETPCAP e KILL. Toda carga e lancada por setpriv com UID/GID dedicado, grupos suplementares vazios, conjuntos de capacidades zerados e no-new-privs. A aplicacao nao pode escrever controles/referencias/evidencias nem acessar a outra variante. O driver e Chrome usam outro UID e perfil exclusivo. O Docker controla PID/mount/network/IPC; a imagem continua compartilhando o kernel do host, risco residual conhecido.
+
+O preflight confere contrato, politica, ferramentas, Node22, identidades, /proc/self/status, somente interface lo, rotas e ausencia de sockets conhecidos do host. A barreira principal e network none; a prova sintetica exige erro de falta de rota IPv4/IPv6, nao timeout generico. O navegador deve acessar fixture local e apresentar erro de rede conclusivo na tentativa a endereco de documentacao. Nenhum endpoint real e usado. Verificacao ambigua interrompe.
+
+Npm, build, servidor e navegador nunca rodam no host. Ha prazos por ferramenta, inicializacao, CDP, pagina e container; timeout encerra a carga. O supervisor encerra todos os processos dos UIDs dedicados; o host remove o container/cgroup inteiro antes de apagar arquivos temporarios. Nenhuma falha permite continuar em ambiente menos restrito.
+
+## Driver e evidencias
+
+Chrome com sandbox padrao; nenhum --no-sandbox. CDP via pipe, sem listener TCP; targets inesperados interrompem o driver. Requisicoes da pagina permitem somente GET/HEAD local na porta da aplicacao. Submissoes e destinos externos sao recusados. Nao enviar formulario real nem usar dados de clientes.
+
+O driver exerce o menu mobile (aria-label Abrir/Fechar menu) e o acordeao da politica (aria-controls card-01-content), com eventos de mouse e mudancas de estado obrigatorias. Isso comprova comportamento React nas duas paginas; JSON-LD existente no SSR sozinho nao comprova hidratacao. A navegacao por link real deve preservar identificador de documento e performance.timeOrigin. Retorno pelo historico tambem deve preservar documento. Sem prontidao baseada apenas em sleep.
+
+Contexto/perfil/container novo por variante; viewports desktop 1280x900 e mobile 390x844. Metadados unicos e nao vazios no SSR e DOM; igualdade entre ambos e entre variantes. JSON-LD completo comparado aos JSONs aprovados; unica normalizacao: nome emitido do logo, com origem, caminho e asset local verificados. Logo institucional visivel obrigatorio, nao lista vazia. Pagina 404 deve permanecer sem JSON-LD.
+
+Resultados de comparacao usam hashes, sem publicar conteudo de pagina. Mensagens de pacotes/app nao sao despejadas em logs publicos: supervisores emitem codigos fixos e resumos limitados. result.json e escrito tambem em falha; screenshots ficam apenas na area temporaria do driver, separada da aplicacao. Nao ha upload-artifact, cache remoto ou publicacao de evidencias. Em falha de inicializacao anterior ao driver, o supervisor emite codigo de bloqueio mesmo que nao exista result.json.
+
+## Cobertura complementar obrigatoria
+
+| Caso | Criterio antes de aprovacao global |
 |---|---|
-| Integridade | Nove hashes do manifesto, diff preservado e duas rotas da base correspondentes. |
-| Instalacao/build | npm ci pelo lockfile e build completo aprovados para base e proposta. |
-| Tipos/lint | Ambos aprovados; falha preexistente documentada continua pendencia, sem aprovacao silenciosa. |
-| SSR real | HTML retornado pelo servidor Nitro, HTTP 200 na home e politica, JSON-LD parseavel; nao usar prototipo como SSR. |
-| Grafos | Home com 11 nos, Organization unica, WebSite, WebPage e oito Service; politica com WebPage unico; IDs unicos e referencias resolvidas. |
-| Escopo | Telefone institucional aprovado; sem endereco, geo, tipos locais, reviews ou campos comerciais nao autorizados. |
-| Metadados | title, description e canonical presentes e identicos entre variantes, sem mudanca indevida. |
-| Hidratacao | JSON-LD no DOM igual ao SSR; sem excecoes ou erros React/console. |
-| Navegacao | Link real home para politica; sem acumulacao de scripts. Retorno, historico e demais rotas exigem checklist complementar abaixo. |
-| Pagina inexistente | HTTP 404 e nenhum JSON-LD institucional indevido. |
-| Formularios | Mesma quantidade e conteudo; nenhuma submissao real; qualquer POST bloqueado no navegador. |
-| Logotipo | Imagens institucionais carregadas, dimensoes intrinsecas positivas e mesmas referencias locais. Revisao visual complementar obrigatoria. |
-| Regressao | Nenhuma diferenca nao relacionada ao schema; checklist complementar aprovado antes de qualquer conclusao global. |
+| Menus e ancoras | Abertura/fechamento, destino local correto, foco e comportamento em desktop/mobile; sem acessar links externos reais. |
+| Fale Conosco e MEI360 | Abrir/fechar, Escape, foco, abertura automatica prevista e ausencia de duplicidade. |
+| Cookies | Estado inicial limpo, aceitar/rejeitar opcionais, reabrir preferencias e persistencia somente no perfil local. |
+| Formularios | Campos, validacao local e teclado; requisicoes de envio devem continuar bloqueadas. |
+| Navegacao | Home/politica/historico; sem scripts acumulados nem metadados antigos. |
+| Aparencia | Capturas nos dois viewports; logo, proporcao, fundo, tipografia, overlays e ausencia de recortes indevidos. |
+| Acessibilidade basica | Ordem de foco e acionamento por teclado, sem campos ocultos recebendo foco indevido. |
 
-## Checklist complementar de interacao e imagem
+Somente menu mobile, acordeao, navegacao/historico, SSR/DOM/grafos/metadados e verificacoes tecnicas do logo estao automatizados nesta revisao. Os demais casos continuam pendentes; nao sao marcados como aprovados. A forma de revisao humana/exportacao das capturas ainda requer escopo autorizado. O supervisor retorna resultado global INCOMPLETE_MANUAL_REVIEW e codigo nao zero mesmo quando todos os checks automatizados passam. Nao confundir teste parcial com homologacao.
 
-O driver preparado cobre SSR, DOM, erros, link da politica, grafos, metadados, imagens e captura local da home. Ele nao comprova sozinho todos os comportamentos visuais ou interacoes de negocio.
+## Riscos residuais e sequencia
 
-Na Fase 8, preparar a observacao autorizada das capturas temporarias ou ampliar o driver, mantendo o mesmo isolamento, para revisar:
-- desktop e mobile; menus e ancoras; home, politica, voltar/avancar;
-- abrir e fechar Fale Conosco e MEI 360, incluindo Escape, abertura automatica e ausencia de duplicidade;
-- consentimento, rejeicao e persistencia local de cookies;
-- foco, teclado, layouts e sobreposicoes;
-- logo legivel, proporcao e integracao com fundo sem recorte indevido;
-- campos e validacao local dos formularios, sem envio e sem dados de cliente.
+1. Nova auditoria estatica dos controles e imagem/cache ainda pendentes.
+2. So depois, eventual autorizacao expressa da revisao exata e escopo de execucao.
+3. Preflight e compatibilidade real de imagem, Docker, Chrome sandbox e lockfile somente podem ser comprovados em execucao futura. Nenhuma ferramenta ou politica sera relaxada para contornar falhas.
+4. Regressao completa depende do checklist complementar e evidencias revisaveis.
+5. Aprovar testes nunca autoriza deploy. Producao, Guara Cloud, Supabase e Brevo nao integram o fluxo.
 
-Capturas e logs ficam somente no filesystem temporario do runner. Nao ha upload-artifact, cache, Pages ou publicacao. Qualquer necessidade de exportacao/revisao desses arquivos exige escopo aprovado na fase seguinte; nao acrescentar publicacao automatica. Nao declarar regressao completa aprovada apenas porque o driver passou.
-
-## Custos e limites
-
-Runner padrao ubuntu-24.04 em repositorio publico: uso gratuito conforme documentacao consultada em 11/11/2026. Nao usar larger runners. Um unico job, timeout 45 minutos (abaixo de 6 horas por job); grupo de concorrencia exclusivo e sem cancelamento de execucao em andamento. Sem cache ou upload de artefatos. Retencao de logs configurada no repositorio: 90 dias. Filas e limites compartilhados da conta continuam aplicaveis. Se o repositorio deixar de ser publico ou o runner mudar, reavaliar antes de executar.
-
-Fontes: https://docs.github.com/en/actions/concepts/billing-and-usage e https://docs.github.com/en/actions/reference/limits.
-
-## Encerramento
-
-Nenhuma execucao na Fase 7. Aprovar testes requer autorizacao independente; nenhuma aprovacao de teste autoriza deploy. Guara Cloud, Supabase, Brevo e site publicado permanecem fora do fluxo.
+Timeout externo planejado: 45 minutos; containers limitados individualmente. Sem garantia antecipada de duracao, memoria ou compatibilidade. Qualquer falta de recursos ou dependencia offline encerra a tentativa.
